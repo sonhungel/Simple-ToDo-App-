@@ -16,11 +16,53 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        view.backgroundColor = .cyan
+
+        self.title = "Task"
+        
+        tableView?.delegate = self
+        tableView?.dataSource = self
+        
+//        ========= setup
+        if !UserDefaults().bool(forKey: "setup"){
+            UserDefaults().set(true, forKey: "setup")
+            UserDefaults().set(0, forKey: "count")
+        }
+        
+        updateTasks()
         
     }
     
-
+    @IBAction func didTapAdd(){
+        
+        let viewController = storyboard?.instantiateViewController(identifier: "entry") as! EntryViewController
+        
+        viewController.title = "New Task"
+        viewController.update = {
+            DispatchQueue.main.async {
+                self.updateTasks()
+            }
+        }
+        
+        navigationController?.pushViewController(viewController, animated: true)
+    }
+    
+    func updateTasks(){
+        
+        tasks.removeAll()
+        
+        guard let count = UserDefaults().value(forKey: "count") as? Int else
+        {
+            return
+        }
+        
+        for x in 0..<count{
+            if let task = UserDefaults().value(forKey: "task_\(x+1)") as? String{
+                self.tasks.append(task)
+            }
+        }
+        
+        tableView?.reloadData()
+    }
 
 }
 
@@ -29,6 +71,18 @@ extension ViewController:UITableViewDelegate{
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        
+        let viewController = storyboard?.instantiateViewController(identifier: "task") as! TaskViewController
+        
+        viewController.title = "New Task"
+        viewController.task = tasks[indexPath.row]
+        viewController.updateAfterDelete = {
+            DispatchQueue.main.async {
+                self.updateTasks()
+            }
+        }
+        
+        navigationController?.pushViewController(viewController, animated: true)
     }
 }
 
